@@ -1,0 +1,1 @@
+export const defaultAvatarPath = "/images/assets/avatar.png"
