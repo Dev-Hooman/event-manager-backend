@@ -21,7 +21,6 @@ import { register, userLogin } from "../utils/Auth.js";
 import { sendEmail } from "../utils/mail.js";
 import setNewPasswordValidation from "../validations/setNewPasswordValidation.js";
 import changePasswordValidation from "../validations/changePasswordValidation.js";
-import validateUser from "../validations/userValidation.js";
 
 export async function registerUser(req, res) {
   const ALLROLES = config.auth.active_roles;
@@ -218,40 +217,3 @@ export async function changePassword(req, res) {
   }
 }
 
-export async function updateProfile(req, res) {
-  const { error } = validateUser(req.body);
-
-  console.log("Error: ", error);
-  if (error) {
-    return res
-      .status(400)
-      .json({ error: error.details[0].message, success: false });
-  }
-
-  const { name, email, photoUrl, phone, preferredCurrency, timeZone } = req.body;
-
-  const userId = req.user._id;
-
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found", success: false });
-    }
-
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (photoUrl) user.photoUrl = photoUrl;
-    if (phone) user.phone = phone;
-    if (preferredCurrency) user.preferredCurrency = preferredCurrency;
-    if (timeZone) user.timeZone = timeZone;
-
-    await user.save();
-
-    return res.json({ message: "Profile updated successfully", success: true });
-  } catch (err) {
-    console.error("Error during profile update:", err);
-    return res
-      .status(500)
-      .json({ error: "Internal server error", success: false });
-  }
-}

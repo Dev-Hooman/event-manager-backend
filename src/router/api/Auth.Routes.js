@@ -5,7 +5,6 @@ import {
   loginUser,
   registerUser,
   setPassword,
-  updateProfile,
   verifyOtp,
 } from "../../controllers/Auth.Controller.js";
 import { authenticate } from "../../middleware/authMiddleware.js";
@@ -23,7 +22,6 @@ AuthRouter.post("/verify-otp", verifyOtp);
 AuthRouter.post("/set-password", setPassword);
 //---------------------------------------------------
 
-AuthRouter.post("/change-password", authenticate, CheckRole(config.auth.active_roles), changePassword); //all roles support
-AuthRouter.patch("/update-profile", authenticate, CheckRole(config.auth.active_roles), updateProfile);
+AuthRouter.post("/change-password", authenticate, CheckRole(config.auth.active_roles), changePassword); 
 
 export default AuthRouter;

@@ -29,6 +29,12 @@ export const config = {
   api: {
     base_path: process.env.API_BASE_PATH || "/api/v1",
   },
+  s3: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
+    bucketName: process.env.AWS_BUCKET_NAME,
+  },
 };
 
 export default config;
