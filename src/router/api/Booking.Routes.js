@@ -6,10 +6,8 @@ import { createBooking, getUserBookings, cancelBooking, updateBookingStatus } fr
 const BookingRouter = express.Router();
 
 BookingRouter.post("/create-booking", authenticate, createBooking);
-// BookingRouter.get("/all-bookings", authenticate, CheckRole(["superadmin"]), getBookings);
 BookingRouter.get("/my-bookings", authenticate, getUserBookings);
-BookingRouter.delete("/cancel-booking/:id", authenticate, cancelBooking);
-BookingRouter.patch("/update-booking-status/:bookingId", authenticate, CheckRole(["user"]), updateBookingStatus);
-// BookingRouter.get("/user-booked-events", authenticate, CheckRole(["user"]), userBookedEvents);
+BookingRouter.delete("/cancel-booking/:id", authenticate, CheckRole(["vendor", "superadmin"]), cancelBooking);
+BookingRouter.patch("/update-booking-status/:bookingId", authenticate, CheckRole(["vendor", "superadmin"]), updateBookingStatus);
 
 export default BookingRouter;

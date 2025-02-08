@@ -4,6 +4,12 @@ import Event from "../models/Event.js";
 
 export const createBooking = async (req, res) => {
   try {
+    if (req.user.role === "superadmin" || req.user.role === "vendor") {
+      return res.status(403).json({
+        error: `${req.user.role} cannot book, only users are eligible to book`,
+        success: false,
+      });
+    }
     const { error } = bookingValidation(req.body);
     if (error)
       return res
@@ -42,21 +48,50 @@ export const createBooking = async (req, res) => {
   }
 };
 
-// export const getBookings = async (req, res) => {
-//   try {
-//     const bookings = await Booking.find().populate("eventId");
-//     res.json({ bookings, success: true });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message, success: false });
-//   }
-// };
-
 export const getUserBookings = async (req, res) => {
+  const userId = req.user._id; // ==========> this will be used specifically for vendor
   try {
-    const bookings = await Booking.find({ userId: req.user._id }).populate(
-      "eventId"
-    );
-    res.json({ bookings, success: true });
+    if (req.user.role === "user") {
+      const bookings = await Booking.find({ userId: req.user._id })
+        .populate({
+          path: "eventId",
+          select:
+            "title description date time location category image price availableSeats userId",
+          populate: { path: "userId", model: "users", select: "name email" },
+        })
+        .populate({ path: "userId", model: "users", select: "name email" });
+
+      res.json({ bookings, success: true });
+    } else if (req.user.role === "vendor") {
+      const bookings = await Booking.find()
+        .populate({
+          path: "eventId",
+          match: { userId: userId },
+          select:
+            "title description date time location category image price availableSeats userId",
+          populate: { path: "userId", model: "users", select: "name email" },
+        })
+        .populate({ path: "userId", model: "users", select: "name email" });
+
+      const vendorBookings = bookings.filter(
+        (booking) => booking.eventId !== null
+      );
+
+      res.json({ bookings: vendorBookings, success: true });
+    } else if (req.user.role === "superadmin") {
+      const bookings = await Booking.find()
+        .populate({
+          path: "eventId",
+          select:
+            "title description date time location category image price availableSeats userId",
+          populate: { path: "userId", model: "users", select: "name email" },
+        })
+        .populate({ path: "userId", model: "users", select: "name email" });
+
+      res.json({ bookings, success: true });
+    } else {
+      res.status(403).json({ error: "Unauthorized access", success: false });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message, success: false });
   }
@@ -120,41 +155,3 @@ export const updateBookingStatus = async (req, res) => {
     });
   }
 };
-
-// export const userBookedEvents = async (req, res) => {
-//   try {
-//     const userId = req.user._id;
-
-//     const bookings = await Booking.find({ userId })
-//       .populate({
-//         path: "eventId",
-//         select: "title userId",
-//         populate: { path: "userId", select: "name email" }, 
-//       })
-//       .populate({ path: "userId", select: "name email" });
-
-//     const userPublishedEvents = [];
-//     const otherEvents = [];
-
-//     bookings.forEach((booking) => {
-//       if (booking.eventId?.userId?._id.toString() === userId) {
-//         userPublishedEvents.push(booking);
-//       } else {
-//         otherEvents.push(booking);
-//       }
-//     });
-
-//     const sortedBookings = [...userPublishedEvents, ...otherEvents].map(
-//       (booking) => ({
-//         eventName: booking.eventId?.title,
-//         bookedByName: booking.userId?.name,
-//         bookedByEmail: booking.userId?.email,
-//       })
-//     );
-
-//     res.status(200).json(sortedBookings);
-//   } catch (error) {
-//     console.error("Error fetching booked events:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
