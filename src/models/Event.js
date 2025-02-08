@@ -10,6 +10,7 @@ const eventSchema = new mongoose.Schema({
   image: { type: String, required: true },
   price: { type: Number, required: true },
   availableSeats: { type: Number, required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 });
 
 const Event = mongoose.model("Event", eventSchema);

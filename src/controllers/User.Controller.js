@@ -1,7 +1,7 @@
+import { photoUrlConverter } from "../misc/photoUrlConverter.js";
 import User from "../models/User.js";
 import { deleteFileFromS3, uploadFileToS3 } from "../utils/s3Config.js";
 import updateProfileValidation from "../validations/updateProfileValidation.js";
-import validateUser from "../validations/userValidation.js";
 import bcrypt from "bcryptjs";
 
 export async function getAllUsers(req, res) {
@@ -23,6 +23,24 @@ export async function getAllUsers(req, res) {
   }
 }
 
+export async function getSingleUser(req, res) {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found", success: false });
+    }
+
+    return res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.log("Error fetching user: ", error);
+    return res
+      .status(500)
+      .json({ error: "Error fetching user", success: false });
+  }
+}
+
 export async function removeUser(req, res) {
   const { id } = req.params;
 
@@ -41,7 +59,7 @@ export async function removeUser(req, res) {
   }
 }
 
-export async function updateUser(req, res) {
+export async function updateProfile(req, res) {
   const { error } = updateProfileValidation(req.body);
   if (error) {
     return res
@@ -80,11 +98,73 @@ export async function updateUser(req, res) {
     user.phone = phone;
     user.photoUrl = imageUrl;
 
+    const updatedPhotoUrl = photoUrlConverter(user.photoUrl);
+
     await user.save();
 
     return res.json({
       message: "Profile updated successfully",
       success: true,
+      updatedUser: { ...user._doc, photoUrl: updatedPhotoUrl },
+    });
+  } catch (err) {
+    console.error("Error during profile update:", err);
+    return res
+      .status(500)
+      .json({ error: "Internal server error", success: false });
+  }
+}
+
+
+export async function updateUser(req, res) {
+  const { error } = updateProfileValidation(req.body);
+  if (error) {
+    return res
+      .status(400)
+      .json({ error: error.details[0].message, success: false });
+  }
+
+  const { name, phone, password, role, email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email is required", success: false });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found", success: false });
+    }
+
+    let imageUrl = user.photoUrl;
+    if (req.file) {
+      if (user.photoUrl) {
+        await deleteFileFromS3(user.photoUrl);
+      }
+      imageUrl = await uploadFileToS3("profile", req.file);
+    }
+
+    if (password) {
+      const newHashedPassword = await bcrypt.hash(password, 10);
+      user.password = newHashedPassword;
+    }
+
+    if(role){
+      user.role
+    }
+
+    user.name = name;
+    user.phone = phone;
+    user.photoUrl = imageUrl;
+
+    const updatedPhotoUrl = photoUrlConverter(user.photoUrl);
+
+    await user.save();
+
+    return res.json({
+      message: "Profile updated successfully",
+      success: true,
+      updatedUser: { ...user._doc, photoUrl: updatedPhotoUrl },
     });
   } catch (err) {
     console.error("Error during profile update:", err);

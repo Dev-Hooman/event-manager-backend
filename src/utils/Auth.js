@@ -8,6 +8,8 @@ import { photoUrlConverter } from "../misc/photoUrlConverter.js";
 const ROLES = config.auth.active_roles;
 
 export async function register(details, role, req, res) {
+  console.log("Details: ", details);  
+
   const { error } = validateUser(req.body);
   if (error)
     return res.status(400).json({

@@ -5,6 +5,9 @@ const updateProfileValidation = (data) => {
     email: Joi.string().email().messages({
       "string.email": "Invalid email format.",
     }).required(),
+    role: Joi.string().messages({
+      "string.base": "Invalid role value.",
+    }).optional(),
     name: Joi.string().min(2).max(50).trim().messages({
       "string.min": "Name must be at least 2 characters.",
       "string.max": "Name cannot exceed 50 characters.",

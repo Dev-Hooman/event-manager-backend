@@ -4,7 +4,6 @@ import eventValidation from "../validations/eventValidation.js";
 
 export const createEvent = async (req, res) => {
   try {
-
     const { error } = eventValidation(req.body);
     if (error)
       return res
@@ -16,16 +15,34 @@ export const createEvent = async (req, res) => {
       imageUrl = await uploadFileToS3("events", req.file);
     }
 
-    const event = await Event.create({ ...req.body, image: imageUrl });
+    const event = await Event.create({
+      ...req.body,
+      image: imageUrl,
+      userId: req.user._id,
+    });
     res.status(201).json(event);
   } catch (error) {
-    res.status(400).json({ error: error.message, success: true });
+    res.status(400).json({ error: error.message, success: false });
   }
 };
 
 export const getEvents = async (req, res) => {
   try {
-    const events = await Event.find();
+    const events = await Event.find().populate({ path: 'userId', model: 'users', select: 'name email' });
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getUsersEvents = async (req, res) => {
+  try {
+    let events;
+    if (req.user.role === "vendor") {
+      events = await Event.find({ userId: req.user._id }).populate({ path: 'userId', model: 'users', select: 'name email' });
+    } else if (req.user.role === "superadmin") {
+      events = await Event.find().populate({ path: 'userId', model: 'users', select: 'name email' });
+    }
     res.json(events);
   } catch (error) {
     res.status(500).json({ error: error.message });
