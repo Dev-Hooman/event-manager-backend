@@ -8,10 +8,8 @@ import config from "./appconfig.js";
  */
 
 const transporter = nodemailer.createTransport({
-  host: config.nodemailer.host,
-  port: config.nodemailer.port,
   secure: true,
-  service: "",
+  service: 'gmail',
   auth: {
     user: config.nodemailer.user,
     pass: config.nodemailer.pass,
